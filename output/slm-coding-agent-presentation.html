@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小模型做 Coding Agent — 教學簡報</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reset.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/black.css" id="theme">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700;900&display=swap');
+
+:root {
+  --accent: #6ee7b7;
+  --accent2: #93c5fd;
+  --accent3: #fca5a5;
+  --bg-dark: #0f172a;
+  --card-bg: rgba(255,255,255,0.06);
+}
+
+.reveal { font-family: 'Noto Sans TC', sans-serif; }
+.reveal .slides { text-align: left; }
+
+/* ── 全部 slides 垂直置中 ── */
+.reveal .slides section {
+  display: flex !important;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  height: 100% !important;
+  padding: 0 50px;
+  box-sizing: border-box;
+}
+/* 封面 / Q&A 改為水平居中 */
+.reveal .slides section.centered {
+  align-items: center;
+}
+
+h1, h2, h3 { font-weight: 900; line-height: 1.2; margin-bottom: 0.3em; }
+h1 { font-size: 1.7em; }
+h2 { font-size: 1.25em; color: var(--accent); margin-top: 0; }
+h3 { font-size: 0.88em; color: var(--accent2); }
+
+p, li { font-size: 0.56em; line-height: 1.6; color: #cbd5e1; }
+strong { color: #f1f5f9; }
+em { color: var(--accent); font-style: normal; }
+
+code {
+  background: rgba(110,231,183,0.12);
+  color: var(--accent);
+  padding: 0.06em 0.28em;
+  border-radius: 3px;
+  font-size: 0.88em;
+  white-space: nowrap;
+}
+
+/* ── Cards ── */
+.card-grid { display: grid; gap: 0.5em; }
+.card-grid.two   { grid-template-columns: 1fr 1fr; }
+.card-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+.card {
+  background: var(--card-bg);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 7px;
+  padding: 0.45em 0.65em;
+}
+.card h4 {
+  margin: 0 0 0.2em 0;
+  font-size: 0.65em;
+  color: var(--accent);
+}
+.card p, .card li { font-size: 0.52em; line-height: 1.5; }
+
+.badge {
+  display: inline-block;
+  background: var(--accent3);
+  color: #1a0a0a;
+  font-size: 0.45em;
+  font-weight: 700;
+  padding: 0.08em 0.35em;
+  border-radius: 20px;
+  margin-right: 0.18em;
+  vertical-align: middle;
+}
+
+/* ── Tables ── */
+table { width: 100%; border-collapse: collapse; font-size: 0.48em; margin-top: 0.25em; }
+th { background: rgba(110,231,183,0.15); color: var(--accent); padding: 0.3em 0.45em; text-align: left; font-weight: 700; white-space: nowrap; }
+td { padding: 0.22em 0.45em; color: #cbd5e1; border-bottom: 1px solid rgba(255,255,255,0.06); }
+tr:hover td { background: rgba(255,255,255,0.03); }
+td:first-child { white-space: nowrap; }
+
+/* ── Highlight box ── */
+.highlight-box {
+  background: linear-gradient(135deg, rgba(110,231,183,0.1), rgba(147,197,253,0.08));
+  border-left: 3px solid var(--accent);
+  border-radius: 0 5px 5px 0;
+  padding: 0.38em 0.6em;
+  margin: 0.3em 0;
+}
+.highlight-box p { font-size: 0.52em; margin: 0; color: #e2e8f0; }
+
+/* ── Flow diagram ── */
+.flow { display: flex; align-items: center; justify-content: center; gap: 0.25em; flex-wrap: wrap; margin: 0.35em 0; }
+.flow-box {
+  background: var(--card-bg);
+  border: 1px solid rgba(110,231,183,0.3);
+  border-radius: 6px;
+  padding: 0.25em 0.55em;
+  font-size: 0.48em;
+  color: var(--accent);
+  text-align: center;
+  max-width: 150px;
+}
+.flow-arrow { color: #475569; font-size: 0.95em; flex-shrink: 0; }
+
+/* ── Source note ── */
+.source-note {
+  font-size: 0.36em;
+  color: #374151;
+  margin-top: 0.35em;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  padding-top: 0.2em;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+ul.checklist { list-style: none; padding-left: 0; margin: 0.15em 0 0 0; }
+ul.checklist li::before { content: "✓ "; color: var(--accent); font-weight: 700; font-size: 0.9em; }
+
+/* ── Numbered item for recap ── */
+.num-item { display: flex; align-items: flex-start; gap: 0.4em; margin-bottom: 0.3em; }
+.num-circle {
+  background: var(--accent);
+  color: #0f172a;
+  font-size: 0.42em;
+  font-weight: 700;
+  width: 1.3em;
+  height: 1.3em;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 0.12em;
+}
+.num-circle.alt { background: var(--accent2); }
+.num-text { font-size: 0.52em; line-height: 1.5; color: #cbd5e1; margin: 0; }
+
+/* ── Code block in card ── */
+.code-block {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(110,231,183,0.2);
+  border-radius: 4px;
+  padding: 0.3em 0.5em;
+  font-size: 0.48em;
+  color: var(--accent);
+  line-height: 1.55;
+  margin: 0.2em 0;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* ── Reveal overrides ── */
+.reveal .slides section.present { top: 0 !important; }
+.reveal .controls { color: var(--accent); }
+.reveal .progress { height: 3px; color: var(--accent); }
+.reveal .slide-number { font-size: 0.42em; color: #475569; }
+
+/* ── Prevent overflow on any element ── */
+.reveal .slides section > * { max-width: 100%; overflow: hidden; }
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- ══ SLIDE 1：封面 ══ -->
+<section class="centered" style="background:linear-gradient(135deg,#0f172a,#1e293b)">
+  <div style="text-align:center;">
+    <div style="font-size:2.6em;margin-bottom:0.12em;">🤖</div>
+    <h1 style="color:#fff;font-size:1.7em;margin-bottom:0.2em;">小模型做 Coding Agent</h1>
+    <p style="font-size:0.7em;color:#94a3b8;line-height:1.5;">
+      如何用 <strong style="color:var(--accent)">7B 以下</strong> 的小型語言模型<br>
+      建構能寫程式、會呼叫工具的 AI Agent？
+    </p>
+    <div style="margin-top:1.3em;font-size:0.4em;color:#475569;line-height:1.7;">
+      資料來源：LLM Wiki · small-models-coding-agents<br>
+      7 篇編譯文章 · 19 篇論文原始資料
+    </div>
+  </div>
+</section>
+
+<!-- ══ SLIDE 2：什麼是 SLM ══ -->
+<section>
+  <h2>📌 什麼是小型語言模型（SLM）？</h2>
+  <div class="card-grid three">
+    <div class="card">
+      <h4>🔹 定義</h4>
+      <p>通常指 <strong>7B 參數以下</strong> 的開源語言模型。常見家族：<br><code>Qwen2.5-Coder</code>、<code>DeepSeek-Coder</code>、<code>Phi</code>、<code>LLaMA</code></p>
+    </div>
+    <div class="card">
+      <h4>🔹 為什麼用它？</h4>
+      <ul class="checklist">
+        <li>成本低（訓練 + 推論都便宜）</li>
+        <li>可部署在邊緣裝置（筆電、手機）</li>
+        <li>延遲低、隱私友好</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>🔹 主要挑戰</h4>
+      <ul class="checklist">
+        <li>推理能力較弱</li>
+        <li>工具呼叫容易出錯</li>
+        <li>多步任務容易崩潰</li>
+      </ul>
+    </div>
+  </div>
+  <div class="highlight-box">
+    <p><strong>核心問題：</strong>SLM 不像 GPT-4 那樣「懂的很多」，但透過正確的架構與提示策略，仍然可以做出有用的 Coding Agent。</p>
+  </div>
+  <div class="source-note">
+    Wiki 來源：model-capabilities.md · small-model-tool-calling-problems.md
+  </div>
+</section>
+
+<!-- ══ SLIDE 3：六大問題 ══ -->
+<section>
+  <h2>⚠️ SLM 工具呼叫的六大核心問題</h2>
+  <div class="card-grid three">
+    <div class="card">
+      <h4><span class="badge">P1</span> 格式遵循困難</h4>
+      <p>JSON 結構錯誤、引數缺失；即使 fine-tune 後仍是最大失敗原因。</p>
+    </div>
+    <div class="card">
+      <h4><span class="badge">P2</span> 工具選擇錯誤</h4>
+      <p>不需要時執意呼叫（false positive）、選錯 tool。</p>
+    </div>
+    <div class="card">
+      <h4><span class="badge">P3</span> 多步驟崩潰</h4>
+      <p>nested calls、多輪協調表現遠遜大模型；1B 模型多輪後成功率 &lt;40%。</p>
+    </div>
+    <div class="card">
+      <h4><span class="badge">P4</span> 過度擬合</h4>
+      <p>SFT on finite data 傾向 memorize pattern，而非學習泛化規則。</p>
+    </div>
+    <div class="card">
+      <h4><span class="badge">P5</span> 上下文受限</h4>
+      <p>累積 token 後效能急降，multi-turn conversation 特別嚴重。</p>
+    </div>
+    <div class="card">
+      <h4><span class="badge">P6</span> Hallucination</h4>
+      <p>Hallucinate 不存在的 tool，或過度依賴既有知識忽略 actual schema。</p>
+    </div>
+  </div>
+  <div class="source-note">
+    Wiki 來源：small-model-tool-calling-problems.md · 參考資料：arXiv:2504.19277、2509.04518、2602.03022
+  </div>
+</section>
+
+<!-- ══ SLIDE 4：模型尺寸對照表 ══ -->
+<section>
+  <h2>📊 不同尺寸的 SLM 能做到什麼程度？</h2>
+  <table>
+    <thead>
+      <tr><th>級距</th><th>代表模型</th><th>Code Gen</th><th>工具呼叫</th><th>適合任務</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>≤1B</strong></td><td>Qwen-0.5B, DeepSeek-1.3B</td><td>~33–40%</td><td>需 SFT，多步極差</td><td>單一指令、領域專精</td></tr>
+      <tr><td><strong>3B</strong></td><td>Qwen2.5-Coder-3B, Phi-3-mini</td><td>~57–72%</td><td>可接受（SFT 後）</td><td>基礎程式碼生成、單步 FC</td></tr>
+      <tr><td><strong>7B</strong></td><td>Qwen2.5-Coder-7B 🏆, LLaMA-3.1-8B</td><td>~82–87%</td><td>良好；TinyAgent-7B &gt; GPT-4-turbo</td><td>多步推理、複雜編程 agent</td></tr>
+    </tbody>
+  </table>
+  <div class="highlight-box">
+    <p>💡 <strong>關鍵發現：</strong>3B→7B 提升 ~30pp，遠大於 0.5B→3B。顯示 <strong>7B 是實用最低門檻</strong>。（arXiv:2507.03160）</p>
+  </div>
+  <div class="source-note">
+    Wiki 來源：small-model-code-gen-benchmarks.md · 參考資料：arXiv:2507.03160、2409.00608
+  </div>
+</section>
+
+<!-- ══ SLIDE 5：解法一·提示工程 ══ -->
+<section>
+  <h2>🛠️ 解法一：面向小模型的提示工程</h2>
+  <div class="card-grid two">
+    <div class="card">
+      <h4>✅ 結構化模板 + 引導解碼</h4>
+      <p>把輸出格式預先定義為固定 template，配合 guided decoding 限制 token 生成空間為有效 JSON/AST。</p>
+      <div class="code-block">&lt;tool_call&gt;
+  tool_id: [number]
+  arguments: {...}
+&lt;/tool_call&gt;</div>
+      <p style="color:#94a3b8;font-size:0.48em;">效果：Mistral-7B BFCL 66.5 → 71.4</p>
+    </div>
+    <div class="card">
+      <h4>✅ 分階段提示 + Few-Shot</h4>
+      <p>拆成三步：<strong>意圖分類 → 工具選擇 → 參數填充</strong></p>
+      <p style="margin-top:0.2em;">難度遞增排列示例；覆蓋邊界案例（false positive/negative）；1B 模型 2–3 個 examples 即可。</p>
+    </div>
+  </div>
+  <div class="highlight-box">
+    <p>🎯 <strong>核心原則：</strong>「降低推理負擔」——透過結構化輸出格式、分階段思考、以及上下文管控，讓小模型在有限預算內發揮最大潛力。</p>
+  </div>
+  <div class="source-note">
+    Wiki 來源：prompt-engineering.md · 參考資料：arXiv:2509.18076
+  </div>
+</section>
+
+<!-- ══ SLIDE 6：解法二·Plan-Execute ══ -->
+<section>
+  <h2>🧩 解法二：Plan-Execute 解耦架構</h2>
+  <p style="font-size:0.5em;color:#94a3b8;margin-bottom:0.3em;">根據 arXiv:2608.22472：sub-3B 模型是優秀的「指令 Following者」而非「規劃者」。</p>
+  <div class="flow">
+    <div class="flow-box">👤 使用者請求</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box" style="border-color:var(--accent2);">
+      <strong>🧠 Planner</strong><br>(SRM 1–2B) 解析意圖、生成計劃
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box" style="border-color:var(--accent);">
+      <strong>⚡ Executor</strong><br>(Main SLM 3–7B) 逐階段執行 + context 隔離
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">📦 最終回應</div>
+  </div>
+  <div class="card-grid three" style="margin-top:0.4em;">
+    <div class="card"><h4>Context 隔離</h4><p>每步只有必要最小 context，避免累積噪訊。</p></div>
+    <div class="card"><h4>角色專精</h4><p>SRM 只需理解 tool semantics，不需強大 code gen。</p></div>
+    <div class="card"><h4>容錯性高</h4><p>單步失敗不影響全局，可 retry specific steps。</p></div>
+  </div>
+  <div class="source-note">
+    Wiki 來源：hybrid-systems.md · 參考資料：arXiv:2608.22472
+  </div>
+</section>
+
+<!-- ══ SLIDE 7：解法三·ToolRAG ══ -->
+<section>
+  <h2>🗂️ 解法三：ToolRAG 與上下文管理</h2>
+  <div class="card-grid two">
+    <div class="card">
+      <h4>🔍 ToolRAG 動態檢索</h4>
+      <p>上百個工具時不要全放 prompt（會淹沒 SLM）。</p>
+      <ul class="checklist">
+        <li>User query → embed → 搜尋 top-K 相關工具</li>
+        <li>僅將 K 個工具納入 prompt</li>
+        <li>輸入長度減少 <strong>60%+</strong></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>🧠 上下文壓縮策略</h4>
+      <ul class="checklist">
+        <li>每 N 步觸發 summarization prompt</li>
+        <li>保留結論，捨棄中間細節</li>
+        <li>滑動視窗只保留最近 M 步</li>
+      </ul>
+    </div>
+  </div>
+  <div class="highlight-box">
+    <p>📌 <strong>實務建議：</strong>先用 ToolRAG 將 prompt 控制在 1500 tokens 以內；context usage &gt;70% 自動觸發摘要。</p>
+  </div>
+  <div class="source-note">
+    Wiki 來源：memory-context.md · 參考資料：TinyAgent（arXiv:2409.00608）
+  </div>
+</section>
+
+<!-- ══ SLIDE 8：解法四·效率優化 ══ -->
+<section>
+  <h2>⚙️ 解法四：量化、剪枝與 RL 後訓練</h2>
+  <table>
+    <thead>
+      <tr><th>技術</th><th>原理</th><th>速度增益</th><th>精度損失</th><th>適用場景</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>GPTQ-4bit</strong></td><td>權重量化到 4-bit</td><td>≈3×</td><td>中等</td><td>記憶體緊張的部署</td></tr>
+      <tr><td><strong>AWQ-4bit</strong></td><td>保留重要權重的 4-bit 量化</td><td>≈3×</td><td>較小</td><td>weight distribution 敏感的模型</td></tr>
+      <tr><td><strong>FP8</strong></td><td>8-bit 浮點，NVIDIA GPU 硬體加速</td><td>≈1.8×</td><td>最小</td><td>NVIDIA 設備（H100 等）</td></tr>
+      <tr><td><strong>GRPO（RL）</strong></td><td>Group Relative Policy Optimization</td><td>—</td><td>改善 accuracy</td><td>進一步提升 tool-use</td></tr>
+    </tbody>
+  </table>
+  <div class="card-grid two" style="margin-top:0.4em;">
+    <div class="card"><h4>最佳實踐順序</h4><p>先<strong>剪枝</strong>→再<strong>量化</strong>，組合減速可達 4–6×，精度損失可控在 3–5pp 內。</p></div>
+    <div class="card"><h4>RL 穩定性提醒</h4><p>直接對小模型做 RL training 極度不穩定（arXiv:2602.03022）；建議搭配 similarity-guided teacher refinement。</p></div>
+  </div>
+  <div class="source-note">
+    Wiki 來源：optimization.md · 參考資料：arXiv:2602.03022（STAR）
+  </div>
+</section>
+
+<!-- ══ SLIDE 9：決策建議表 ══ -->
+<section>
+  <h2>🎯 如何選擇？任務－模型配對決策</h2>
+  <div class="card-grid three">
+    <div class="card">
+      <h4>單一工具呼叫</h4>
+      <p>規模 <strong>1.5B</strong>｜SFT + guided decoding<br>預期成功 <strong>70–80%</strong></p>
+    </div>
+    <div class="card">
+      <h4>多輪工具協調</h4>
+      <p>規模 <strong>7B 或 hybrid</strong>｜ToolRAG + plan-decoupling<br>預期成功 <strong>40–60%</strong></p>
+    </div>
+    <div class="card">
+      <h4>單一函式程式碼生成</h4>
+      <p>規模 <strong>3B</strong>｜Instruct tuning<br>預期成功 <strong>60–75%</strong></p>
+    </div>
+    <div class="card">
+      <h4>多文件 refactoring</h4>
+      <p>規模 <strong>7B</strong>｜SFT + RAG<br>預期成功 <strong>30–50%</strong></p>
+    </div>
+    <div class="card">
+      <h4>倉庫級 coding agent</h4>
+      <p>規模 <strong>7B+ 或 MoE</strong>｜完整 framework<br>預期成功 <strong>&lt;30%</strong></p>
+    </div>
+    <div class="card">
+      <h4>Edge 部署（終端裝置）</h4>
+      <p>規模 <strong>≤1.1B</strong>｜TinyAgent SFT + quantization<br>侷限指定領域</p>
+    </div>
+  </div>
+  <div class="highlight-box">
+    <p>💡 <strong>一句話：</strong>&lt;3B = 專才 ｜ 3–7B = 通用起點 ｜ &gt;7B = 接近實際可用</p>
+  </div>
+  <div class="source-note">
+    Wiki 來源：model-capabilities.md
+  </div>
+</section>
+
+<!-- ══ SLIDE 10：重點回顧 ══ -->
+<section>
+  <h2>📋 本次課程重點回顧</h2>
+  <div style="padding-left:0.2em;">
+    <div class="num-item">
+      <div class="num-circle">1</div>
+      <p class="num-text"><strong>六大核心問題</strong>：格式錯誤、工具選擇失誤、多步崩潰、過擬合、上下文受限、hallucination</p>
+    </div>
+    <div class="num-item">
+      <div class="num-circle alt">2</div>
+      <p class="num-text"><strong>提示工程解法</strong>：結構化模板 + 引導解碼 + 分階段提示，核心原則是「降低推理負擔」</p>
+    </div>
+    <div class="num-item">
+      <div class="num-circle">3</div>
+      <p class="num-text"><strong>Plan-Execute 解耦</strong>（arXiv:2608.22472）讓 SRM 規劃、主模型執行</p>
+    </div>
+    <div class="num-item">
+      <div class="num-circle alt">4</div>
+      <p class="num-text"><strong>效率優化</strong>：量化（AWQ/GPTQ/FP8）、剪枝、RL 後訓練——最大化效能</p>
+    </div>
+    <div class="num-item">
+      <div class="num-circle">5</div>
+      <p class="num-text"><strong>7B 是實用门槛</strong>：&lt;3B 專才、3–7B 通用起點、&gt;7B 接近實際可用</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SLIDE 11：Q&A ══ -->
+<section class="centered" style="background:linear-gradient(135deg,#0f172a,#1e293b)">
+  <div style="text-align:center;">
+    <div style="font-size:2.6em;margin-bottom:0.15em;">❓</div>
+    <h1 style="color:#fff;font-size:1.6em;margin-bottom:0.35em;">提問時間</h1>
+    <p style="font-size:0.6em;color:#94a3b8;line-height:1.6;">
+      這份簡報的所有內容均來自 LLM Wiki<br>
+      每頁底部均標示對應 Wiki 文章與參考資料
+    </p>
+    <div style="margin-top:1.3em;font-size:0.4em;color:#374151;line-height:2;">
+      作業：LLM Wiki × 教學 HTML 簡報｜主題：小模型做 Coding Agent
+    </div>
+  </div>
+</section>
+
+</div><!-- /.slides -->
+</div><!-- /.reveal -->
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+<script>
+Reveal.initialize({
+  hash: true,
+  slideNumber: 'c/t',
+  transition: 'slide',
+  transitionSpeed: 'default',
+  backgroundTransition: 'fade',
+  width: 1280,
+  height: 720,
+  margin: 0.02,
+  minScale: 0.2,
+  maxScale: 2.0,
+});
+</script>
+</body>
+</html>
